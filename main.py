@@ -117,7 +117,11 @@ class Main(tk.Frame):
             "Comments", text="Количество комментариев под постом"
         )
 
-        self.tree.pack()
+        self.tree.pack(side=tk.LEFT)
+
+        scroll = tk.Scrollbar(self, command=self.tree.yview)
+        scroll.pack(side=tk.LEFT, fill=tk.Y)
+        self.tree.configure(yscrollcommand=scroll.set)
 
     def record(self, description, type, activity, link, author, comments):
         self.db.insert_data(
