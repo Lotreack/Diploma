@@ -45,11 +45,35 @@ class Main(tk.Frame):
             text="Удалить запись",
             bg="#d7d8e0",
             bd=2,
-            image=self.update_img,
+            image=self.delete_img,
             compound=tk.TOP,
             command=self.delete_records,
         )
         btn_delete_dialog.pack(side=tk.LEFT)
+
+        self.refresh_img = tk.PhotoImage(file="refresh.png")
+        btn_refresh_dialog = tk.Button(
+            toolbar,
+            text="Обновить",
+            bg="#d7d8e0",
+            bd=2,
+            image=self.refresh_img,
+            compound=tk.TOP,
+            command=self.view_records,
+        )
+        btn_refresh_dialog.pack(side=tk.LEFT)
+
+        self.search_img = tk.PhotoImage(file="search.png")
+        btn_search_dialog = tk.Button(
+            toolbar,
+            text="Найти запись",
+            bg="#d7d8e0",
+            bd=2,
+            image=self.search_img,
+            compound=tk.TOP,
+            command=self.open_search_dialog,
+        )
+        btn_search_dialog.pack(side=tk.LEFT)
 
         self.tree = ttk.Treeview(
             self,
@@ -136,11 +160,26 @@ class Main(tk.Frame):
         self.db.conn.commit()
         self.view_records()
 
+    def search_records(self, description):
+        description = ("%" + description + "%",)
+        self.db.curs.execute(
+            """SELECT * FROM destructive_content WHERE description LIKE ?""",
+            description,
+        )
+        [self.tree.delete(i) for i in self.tree.get_children()]
+        [
+            self.tree.insert("", "end", values=row)
+            for row in self.db.curs.fetchall()
+        ]
+
     def open_dialog(self):
         Child_add()
 
     def open_update_dialog(self):
         Child_update()
+
+    def open_search_dialog(self):
+        Search()
 
 
 class Child_add(tk.Toplevel):
@@ -241,6 +280,35 @@ class Child_update(Child_add):
             ),
         )
         self.btn_ok.destroy()
+
+
+class Search(tk.Toplevel):
+    def __init__(self):
+        super().__init__()
+        self.init_search()
+        self.view = app
+
+    def init_search(self):
+        self.title("Поиск ")
+        self.geometry("700x100+400+300")
+        self.resizable(False, False)
+
+        label_search = tk.Label(self, text="Поиск записей")
+        label_search.place(x=10, y=20)
+
+        self.entry_search = ttk.Entry(self)
+        self.entry_search.place(x=120, y=20, width=500)
+
+        btn_cancel = ttk.Button(self, text="Закрыть", command=self.destroy)
+        btn_cancel.place(x=185, y=50)
+
+        btn_search = ttk.Button(self, text="Поиск")
+        btn_search.place(x=105, y=50)
+        btn_search.bind(
+            "<Button-1>",
+            lambda event: self.view.search_records(self.entry_search.get()),
+        )
+        btn_search.bind("<Button-1>", lambda event: self.destroy(), add="+")
 
 
 class DB:
