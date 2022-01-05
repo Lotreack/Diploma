@@ -263,6 +263,8 @@ class Child_update(Child_add):
         super().__init__()
         self.init_edit()
         self.view = app
+        self.db = db
+        self.default_data()
 
     def init_edit(self):
         self.title("Редактировать запись")
@@ -280,6 +282,27 @@ class Child_update(Child_add):
             ),
         )
         self.btn_ok.destroy()
+
+    def default_data(self):
+        self.db.curs.execute(
+            """SELECT * FROM destructive_content WHERE id=?""",
+            (self.view.tree.set(self.view.tree.selection()[0], "#1"),),
+        )
+        row = self.db.curs.fetchone()
+        self.entry_description.insert(0, row[1])
+        self.entry_type.insert(0, row[2])
+        if row[2] == "Видео":
+            self.combobox.current(0)
+        elif row[2] == "Картинка":
+            self.combobox.current(1)
+        elif row[2] == "Текстовый пост":
+            self.combobox.current(2)
+        elif row[2] == "Ссылка":
+            self.combobox.current(3)
+        self.entry_activity.insert(0, row[3])
+        self.entry_link.insert(0, row[4])
+        self.entry_author.insert(0, row[5])
+        self.entry_comments.insert(0, row[6])
 
 
 class Search(tk.Toplevel):
