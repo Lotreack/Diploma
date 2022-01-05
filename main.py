@@ -25,8 +25,19 @@ class Main(tk.Frame):
             compound=tk.TOP,
             image=self.add_img,
         )
-
         btn_open_dialog.pack(side=tk.LEFT)
+
+        self.update_img = tk.PhotoImage(file="edit.png")
+        btn_edit_dialog = tk.Button(
+            toolbar,
+            text="Редактировать",
+            bg="#d7d8e0",
+            bd=2,
+            image=self.update_img,
+            compound=tk.TOP,
+            command=self.open_update_dialog,
+        )
+        btn_edit_dialog.pack(side=tk.LEFT)
 
         self.tree = ttk.Treeview(
             self,
@@ -78,6 +89,24 @@ class Main(tk.Frame):
         )
         self.view_records()
 
+    def update_record(
+        self, description, type, activity, link, author, comments
+    ):
+        self.db.curs.execute(
+            """UPDATE destructive_content description=?, type=?, activity=?, link=?, author=?, comments=? WHERE ID=?""",
+            (
+                description,
+                type,
+                activity,
+                link,
+                author,
+                comments,
+                self.tree.set(self.tree.selection()[0], "#1"),
+            ),
+        )
+        self.db.conn.commit()
+        self.view_records()
+
     def view_records(self):
         self.db.curs.execute("""SELECT * FROM destructive_content""")
         [self.tree.delete(i) for i in self.tree.get_children()]
@@ -88,6 +117,9 @@ class Main(tk.Frame):
 
     def open_dialog(self):
         Child_add()
+
+    def open_update_dialog():
+        Child_update()
 
 
 class Child_add(tk.Toplevel):
@@ -148,10 +180,9 @@ class Child_add(tk.Toplevel):
         btn_cancel = ttk.Button(self, text="Закрыть", command=self.destroy)
         btn_cancel.place(x=720, y=370)
 
-        btn_ok = ttk.Button(self, text="Добавить")
-        btn_ok.place(x=720, y=10)
-
-        btn_ok.bind(
+        self.btn_ok = ttk.Button(self, text="Добавить")
+        self.btn_ok.place(x=720, y=10)
+        self.btn_ok.bind(
             "<Button-1>",
             lambda event: self.view.record(
                 self.entry_description.get(),
@@ -165,6 +196,30 @@ class Child_add(tk.Toplevel):
 
         self.grab_set()
         self.focus_set()
+
+
+class Child_update(Child_add):
+    def __init__(self):
+        super().__init__()
+        self.init_edit()
+        self.view = app
+
+    def init_edit(self):
+        self.title("Редактировать запись")
+        btn_edit = ttk.Button(self, text="Редактировать")
+        btn_edit.place(x=205, y=170)
+        btn_edit.bind(
+            "<Button-1>",
+            lambda event: self.view.update_record(
+                self.entry_description.get(),
+                self.entry_type.get(),
+                self.entry_activity.get(),
+                self.entry_link.get(),
+                self.entry_author.get(),
+                self.comments.get(),
+            ),
+        )
+        self.btn_ok.destroy()
 
 
 class DB:
@@ -204,7 +259,6 @@ if __name__ == "__main__":
     db = DB()
     app = Main(root)
     app.pack()
-
     root.title("База данных о контентах с признаками деструктивности")
     root.geometry("1900x600+0+200")
     root.resizable(False, False)
