@@ -93,7 +93,7 @@ class Main(tk.Frame):
         self, description, type, activity, link, author, comments
     ):
         self.db.curs.execute(
-            """UPDATE destructive_content description=?, type=?, activity=?, link=?, author=?, comments=? WHERE ID=?""",
+            """UPDATE destructive_content SET description=?, type=?, activity=?, link=?, author=?, comments=? WHERE ID=?""",
             (
                 description,
                 type,
@@ -118,7 +118,7 @@ class Main(tk.Frame):
     def open_dialog(self):
         Child_add()
 
-    def open_update_dialog():
+    def open_update_dialog(self):
         Child_update()
 
 
