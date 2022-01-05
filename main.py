@@ -39,6 +39,18 @@ class Main(tk.Frame):
         )
         btn_edit_dialog.pack(side=tk.LEFT)
 
+        self.delete_img = tk.PhotoImage(file="delete.png")
+        btn_delete_dialog = tk.Button(
+            toolbar,
+            text="Удалить запись",
+            bg="#d7d8e0",
+            bd=2,
+            image=self.update_img,
+            compound=tk.TOP,
+            command=self.delete_records,
+        )
+        btn_delete_dialog.pack(side=tk.LEFT)
+
         self.tree = ttk.Treeview(
             self,
             columns=(
@@ -114,6 +126,15 @@ class Main(tk.Frame):
             self.tree.insert("", "end", values=row)
             for row in self.db.curs.fetchall()
         ]
+
+    def delete_records(self):
+        for selection_item in self.tree.selection():
+            self.db.curs.execute(
+                """DELETE FROM destructive_content WHERE id=?""",
+                (self.tree.set(selection_item, "#1"),),
+            )
+        self.db.conn.commit()
+        self.view_records()
 
     def open_dialog(self):
         Child_add()
@@ -207,7 +228,7 @@ class Child_update(Child_add):
     def init_edit(self):
         self.title("Редактировать запись")
         btn_edit = ttk.Button(self, text="Редактировать")
-        btn_edit.place(x=205, y=170)
+        btn_edit.place(x=700, y=30)
         btn_edit.bind(
             "<Button-1>",
             lambda event: self.view.update_record(
@@ -216,7 +237,7 @@ class Child_update(Child_add):
                 self.entry_activity.get(),
                 self.entry_link.get(),
                 self.entry_author.get(),
-                self.comments.get(),
+                self.entry_comments.get(),
             ),
         )
         self.btn_ok.destroy()
