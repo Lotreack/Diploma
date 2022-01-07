@@ -256,11 +256,11 @@ class Child_add(tk.Toplevel):
         self.entry_type = self.combobox = ttk.Combobox(
             self,
             values=[
-                u"Видео",
-                u"Картинка",
-                u"Текстовый пост",
-                u"Ссылка",
-                u"Текстовый комментарий",
+                "Видео",
+                "Картинка",
+                "Текстовый пост",
+                "Ссылка",
+                "Текстовый комментарий",
             ],
         )
         self.combobox.current(0)
@@ -419,12 +419,14 @@ class Search_link(tk.Toplevel):
 
 class DB:
     def __init__(self):
-        self.table_name="destructive_content"
-        self.conn = pymysql.connect(host='91.210.169.157',
-            user='user',
-            password='',
-            db='db_content',
-            charset='utf8mb4')
+        self.table_name = "destructive_content"
+        self.conn = pymysql.connect(
+            host="91.210.169.157",
+            user="user",
+            password="",
+            db="db_content",
+            charset="utf8mb4",
+        )
         self.curs = self.conn.cursor()
         self.curs.execute(
             f"""CREATE TABLE IF NOT EXISTS {self.table_name} 
@@ -451,7 +453,15 @@ class DB:
            comments, 
            risk)
            VALUES(%s, %s, %s, %s, %s, %s, %s)""",
-            [description, type, int(activity), link, author, int(comments), risk]
+            [
+                description,
+                type,
+                int(activity),
+                link,
+                author,
+                int(comments),
+                risk,
+            ],
         )
         self.conn.commit()
 
