@@ -218,8 +218,8 @@ class Child_add(tk.Toplevel):
         label_comments = tk.Label(self, text="Количество комментариев")
         label_comments.place(x=120, y=260)
 
-        label_risk = tk.Label(self, text="Риск")
-        label_risk.place(x=120, y=290)
+        # label_risk = tk.Label(self, text="Риск")
+        # label_risk.place(x=120, y=290)
         ########################################################
 
         self.entry_description = ttk.Entry(self)
@@ -244,8 +244,8 @@ class Child_add(tk.Toplevel):
         self.entry_comments = ttk.Entry(self)
         self.entry_comments.place(x=300, y=260)
 
-        self.entry_risk = ttk.Entry(self)
-        self.entry_risk.place(x=300, y=290)
+        # self.entry_risk = ttk.Entry(self)
+        # self.entry_risk.place(x=300, y=290)
         ###############################################################
 
         btn_cancel = ttk.Button(self, text="Закрыть", command=self.destroy)
@@ -262,8 +262,7 @@ class Child_add(tk.Toplevel):
                 self.entry_link.get(),
                 self.entry_author.get(),
                 self.entry_comments.get(),
-                float(self.entry_risk.get())
-                * float(self.entry_activity.get())
+                float(self.entry_activity.get())
                 * float(self.entry_comments.get())
                 * 0.00001,
             ),
