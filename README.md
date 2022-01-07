@@ -15,5 +15,6 @@ pip-packages
 Pylance
 Python Docstring Generator
 Python Preview 
-Python Type Hint 
+Python Type Hint
+pip3 install pymysql 
 5)Открываешь проект и запускаешь 

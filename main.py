@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-import sqlite3
+import pymysql
 
 
 class Main(tk.Frame):
@@ -15,7 +15,7 @@ class Main(tk.Frame):
         toolbar = tk.Frame(bg="#d7d8e0", bd=2)
         toolbar.pack(side=tk.TOP, fill=tk.X)
 
-        self.add_img = tk.PhotoImage(file="add.png")
+        self.add_img = tk.PhotoImage(file="./img/add.png")
         btn_open_dialog = tk.Button(
             toolbar,
             text="Добавить данные",
@@ -27,7 +27,7 @@ class Main(tk.Frame):
         )
         btn_open_dialog.pack(side=tk.LEFT)
 
-        self.update_img = tk.PhotoImage(file="edit.png")
+        self.update_img = tk.PhotoImage(file="./img/edit.png")
         btn_edit_dialog = tk.Button(
             toolbar,
             text="Редактировать",
@@ -39,7 +39,7 @@ class Main(tk.Frame):
         )
         btn_edit_dialog.pack(side=tk.LEFT)
 
-        self.delete_img = tk.PhotoImage(file="delete.png")
+        self.delete_img = tk.PhotoImage(file="./img/delete.png")
         btn_delete_dialog = tk.Button(
             toolbar,
             text="Удалить запись",
@@ -51,7 +51,7 @@ class Main(tk.Frame):
         )
         btn_delete_dialog.pack(side=tk.LEFT)
 
-        self.refresh_img = tk.PhotoImage(file="refresh.png")
+        self.refresh_img = tk.PhotoImage(file="./img/refresh.png")
         btn_refresh_dialog = tk.Button(
             toolbar,
             text="Обновить",
@@ -63,7 +63,7 @@ class Main(tk.Frame):
         )
         btn_refresh_dialog.pack(side=tk.LEFT)
 
-        self.search_img = tk.PhotoImage(file="search.png")
+        self.search_img = tk.PhotoImage(file="./img/search.png")
         btn_search_dialog = tk.Button(
             toolbar,
             text="Найти запись",
@@ -75,7 +75,7 @@ class Main(tk.Frame):
         )
         btn_search_dialog.pack(side=tk.LEFT)
 
-        self.search_img_link = tk.PhotoImage(file="search_link.png")
+        self.search_img_link = tk.PhotoImage(file="./img/search_link.png")
         btn_search_link_dialog = tk.Button(
             toolbar,
             text="Найти запись по ссылке",
@@ -127,7 +127,7 @@ class Main(tk.Frame):
 
         self.tree.heading("Comments", text="Количество комментариев")
 
-        self.tree.heading("Risk", text="Риск распростарнения контента")
+        self.tree.heading("Risk", text="Риск распространения контента")
 
         self.tree.pack(side=tk.LEFT)
 
@@ -147,15 +147,15 @@ class Main(tk.Frame):
         self, description, type, activity, link, author, comments, risk
     ):
         self.db.curs.execute(
-            """UPDATE destructive_content SET description=?, type=?, activity=?, link=?, author=?, comments=?, risk=? WHERE ID=?""",
+            f"""UPDATE {self.db.table_name} SET description=%s, type=%s, activity=%s, link=%s, author=%s, comments=%s, risk=%s WHERE ID=%s""",
             (
                 description,
                 type,
-                activity,
+                int(activity),
                 link,
                 author,
-                comments,
-                risk,
+                int(comments),
+                float(risk),
                 self.tree.set(self.tree.selection()[0], "#1"),
             ),
         )
@@ -163,7 +163,7 @@ class Main(tk.Frame):
         self.view_records()
 
     def view_records(self):
-        self.db.curs.execute("""SELECT * FROM destructive_content""")
+        self.db.curs.execute(f"""SELECT * FROM {self.db.table_name}""")
         [self.tree.delete(i) for i in self.tree.get_children()]
         [
             self.tree.insert("", "end", values=row)
@@ -173,7 +173,7 @@ class Main(tk.Frame):
     def delete_records(self):
         for selection_item in self.tree.selection():
             self.db.curs.execute(
-                """DELETE FROM destructive_content WHERE id=?""",
+                f"""DELETE FROM {self.db.table_name} WHERE id=%s""",
                 (self.tree.set(selection_item, "#1"),),
             )
         self.db.conn.commit()
@@ -182,7 +182,7 @@ class Main(tk.Frame):
     def search_records(self, description):
         description = ("%" + description + "%",)
         self.db.curs.execute(
-            """SELECT * FROM destructive_content WHERE description LIKE ?""",
+            f"""SELECT * FROM {self.db.table_name} WHERE description LIKE %s""",
             description,
         )
         [self.tree.delete(i) for i in self.tree.get_children()]
@@ -194,7 +194,7 @@ class Main(tk.Frame):
     def search_link_records(self, link):
         link = ("%" + link + "%",)
         self.db.curs.execute(
-            """SELECT * FROM destructive_content WHERE link LIKE ?""",
+            f"""SELECT * FROM {self.db.table_name} WHERE link LIKE %s""",
             link,
         )
         [self.tree.delete(i) for i in self.tree.get_children()]
@@ -292,10 +292,10 @@ class Child_add(tk.Toplevel):
             lambda event: self.view.record(
                 self.entry_description.get(),
                 self.entry_type.get(),
-                self.entry_activity.get(),
+                int(self.entry_activity.get()),
                 self.entry_link.get(),
                 self.entry_author.get(),
-                self.entry_comments.get(),
+                int(self.entry_comments.get()),
                 float(self.entry_activity.get())
                 * float(self.entry_comments.get())
                 * 0.0000001,
@@ -323,10 +323,10 @@ class Child_update(Child_add):
             lambda event: self.view.update_record(
                 self.entry_description.get(),
                 self.entry_type.get(),
-                self.entry_activity.get(),
+                int(self.entry_activity.get()),
                 self.entry_link.get(),
                 self.entry_author.get(),
-                self.entry_comments.get(),
+                int(self.entry_comments.get()),
                 float(self.entry_activity.get())
                 * float(self.entry_comments.get())
                 * 0.0000001,
@@ -336,7 +336,7 @@ class Child_update(Child_add):
 
     def default_data(self):
         self.db.curs.execute(
-            """SELECT * FROM destructive_content WHERE id=?""",
+            f"""SELECT * FROM {self.db.table_name} WHERE id=%s""",
             (self.view.tree.set(self.view.tree.selection()[0], "#1"),),
         )
         row = self.db.curs.fetchone()
@@ -419,18 +419,23 @@ class Search_link(tk.Toplevel):
 
 class DB:
     def __init__(self):
-        self.conn = sqlite3.connect("destructive_content.db")
+        self.table_name="destructive_content"
+        self.conn = pymysql.connect(host='91.210.169.157',
+            user='user',
+            password='',
+            db='db_content',
+            charset='utf8mb4')
         self.curs = self.conn.cursor()
         self.curs.execute(
-            """CREATE TABLE IF NOT EXISTS destructive_content 
-           (id integer primary key, 
+            f"""CREATE TABLE IF NOT EXISTS {self.table_name} 
+           (id integer primary key auto_increment, 
            description text, 
            type text, 
            activity integer, 
            link text, 
            author text, 
            comments integer,
-           risk real)"""
+           risk double(25,15))"""
         )
         self.conn.commit()
 
@@ -438,18 +443,16 @@ class DB:
         self, description, type, activity, link, author, comments, risk
     ):
         self.curs.execute(
-            """ INSERT INTO destructive_content (description, 
+            f""" INSERT INTO {self.table_name} (description, 
            type, 
            activity, 
            link, 
            author, 
            comments, 
            risk)
-           
-           VALUES(?, ?, ?, ?, ?, ?, ?)""",
-            (description, type, activity, link, author, comments, risk),
+           VALUES(%s, %s, %s, %s, %s, %s, %s)""",
+            [description, type, int(activity), link, author, int(comments), risk]
         )
-
         self.conn.commit()
 
 
