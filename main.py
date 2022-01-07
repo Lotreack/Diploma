@@ -99,6 +99,7 @@ class Main(tk.Frame):
         self.tree.column("Author", width=150, anchor=tk.CENTER)
         self.tree.column("Comments", width=250, anchor=tk.CENTER)
         self.tree.column("Risk", width=250, anchor=tk.CENTER)
+
         self.tree.heading("ID", text="ID записи")
         self.tree.heading(
             "Description",
@@ -114,7 +115,7 @@ class Main(tk.Frame):
 
         self.tree.heading("Comments", text="Количество комментариев")
 
-        self.tree.heading("Risk", text="Риск")
+        self.tree.heading("Risk", text="Риск распростарнения контента")
 
         self.tree.pack(side=tk.LEFT)
 
@@ -209,7 +210,7 @@ class Child_add(tk.Toplevel):
         label_activity = tk.Label(self, text="Количество переходов к посту")
         label_activity.place(x=120, y=170)
 
-        label_link = tk.Label(self, text="Ссылка")
+        label_link = tk.Label(self, text="Ссылка на пост")
         label_link.place(x=120, y=200)
 
         label_author = tk.Label(self, text="Автор")
@@ -227,7 +228,13 @@ class Child_add(tk.Toplevel):
 
         self.entry_type = self.combobox = ttk.Combobox(
             self,
-            values=[u"Видео", u"Картинка", u"Текстовый пост", u"Ссылка"],
+            values=[
+                u"Видео",
+                u"Картинка",
+                u"Текстовый пост",
+                u"Ссылка",
+                u"Текстовый комментарий",
+            ],
         )
         self.combobox.current(0)
         self.combobox.place(x=300, y=140)
@@ -264,7 +271,7 @@ class Child_add(tk.Toplevel):
                 self.entry_comments.get(),
                 float(self.entry_activity.get())
                 * float(self.entry_comments.get())
-                * 0.00001,
+                * 0.0000001,
             ),
         )
 
@@ -293,7 +300,9 @@ class Child_update(Child_add):
                 self.entry_link.get(),
                 self.entry_author.get(),
                 self.entry_comments.get(),
-                self.entry_risk.get(),
+                float(self.entry_activity.get())
+                * float(self.entry_comments.get())
+                * 0.0000001,
             ),
         )
         self.btn_ok.destroy()
