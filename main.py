@@ -15,7 +15,7 @@ class Main(tk.Frame):
         toolbar = tk.Frame(bg="#d7d8e0", bd=2)
         toolbar.pack(side=tk.TOP, fill=tk.X)
 
-        self.add_img = tk.PhotoImage(file="add.png")
+        self.add_img = tk.PhotoImage(file="./img/add.png")
         btn_open_dialog = tk.Button(
             toolbar,
             text="Добавить данные",
@@ -27,7 +27,7 @@ class Main(tk.Frame):
         )
         btn_open_dialog.pack(side=tk.LEFT)
 
-        self.update_img = tk.PhotoImage(file="edit.png")
+        self.update_img = tk.PhotoImage(file="./img/edit.png")
         btn_edit_dialog = tk.Button(
             toolbar,
             text="Редактировать",
@@ -39,7 +39,7 @@ class Main(tk.Frame):
         )
         btn_edit_dialog.pack(side=tk.LEFT)
 
-        self.delete_img = tk.PhotoImage(file="delete.png")
+        self.delete_img = tk.PhotoImage(file="./img/delete.png")
         btn_delete_dialog = tk.Button(
             toolbar,
             text="Удалить запись",
@@ -51,7 +51,7 @@ class Main(tk.Frame):
         )
         btn_delete_dialog.pack(side=tk.LEFT)
 
-        self.refresh_img = tk.PhotoImage(file="refresh.png")
+        self.refresh_img = tk.PhotoImage(file="./img/refresh.png")
         btn_refresh_dialog = tk.Button(
             toolbar,
             text="Обновить",
@@ -63,7 +63,7 @@ class Main(tk.Frame):
         )
         btn_refresh_dialog.pack(side=tk.LEFT)
 
-        self.search_img = tk.PhotoImage(file="search.png")
+        self.search_img = tk.PhotoImage(file="./img/search.png")
         btn_search_dialog = tk.Button(
             toolbar,
             text="Найти запись",
@@ -75,7 +75,7 @@ class Main(tk.Frame):
         )
         btn_search_dialog.pack(side=tk.LEFT)
 
-        self.search_img_link = tk.PhotoImage(file="search_link.png")
+        self.search_img_link = tk.PhotoImage(file="./img/search_link.png")
         btn_search_link_dialog = tk.Button(
             toolbar,
             text="Найти запись по ссылке",
