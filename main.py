@@ -163,7 +163,7 @@ class Main(tk.Frame):
         self.view_records()
 
     def view_records(self):
-        self.db.curs.execute("""SELECT * FROM destructive_content""")
+        self.db.curs.execute(f"""SELECT * FROM {self.db.table_name}""")
         [self.tree.delete(i) for i in self.tree.get_children()]
         [
             self.tree.insert("", "end", values=row)
@@ -173,7 +173,7 @@ class Main(tk.Frame):
     def delete_records(self):
         for selection_item in self.tree.selection():
             self.db.curs.execute(
-                """DELETE FROM destructive_content WHERE id=%s""",
+                f"""DELETE FROM {self.db.table_name} WHERE id=%s""",
                 (self.tree.set(selection_item, "#1"),),
             )
         self.db.conn.commit()
@@ -182,7 +182,7 @@ class Main(tk.Frame):
     def search_records(self, description):
         description = ("%" + description + "%",)
         self.db.curs.execute(
-            """SELECT * FROM destructive_content WHERE description LIKE %s""",
+            f"""SELECT * FROM {self.db.table_name} WHERE description LIKE %s""",
             description,
         )
         [self.tree.delete(i) for i in self.tree.get_children()]
@@ -194,7 +194,7 @@ class Main(tk.Frame):
     def search_link_records(self, link):
         link = ("%" + link + "%",)
         self.db.curs.execute(
-            """SELECT * FROM destructive_content WHERE link LIKE %s""",
+            f"""SELECT * FROM {self.db.table_name} WHERE link LIKE %s""",
             link,
         )
         [self.tree.delete(i) for i in self.tree.get_children()]
@@ -427,7 +427,7 @@ class DB:
             charset='utf8mb4')
         self.curs = self.conn.cursor()
         self.curs.execute(
-            """CREATE TABLE IF NOT EXISTS destructive_content 
+            f"""CREATE TABLE IF NOT EXISTS {self.table_name} 
            (id integer primary key auto_increment, 
            description text, 
            type text, 
@@ -435,7 +435,7 @@ class DB:
            link text, 
            author text, 
            comments integer,
-           risk real)"""
+           risk double(25,15))"""
         )
         self.conn.commit()
 
