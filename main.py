@@ -75,6 +75,18 @@ class Main(tk.Frame):
         )
         btn_search_dialog.pack(side=tk.LEFT)
 
+        self.search_img_link = tk.PhotoImage(file="search_link.png")
+        btn_search_link_dialog = tk.Button(
+            toolbar,
+            text="Найти запись по ссылке",
+            bg="#d7d8e0",
+            bd=2,
+            image=self.search_img_link,
+            compound=tk.TOP,
+            command=self.open_search_link_dialog,
+        )
+        btn_search_link_dialog.pack(side=tk.LEFT)
+
         self.tree = ttk.Treeview(
             self,
             columns=(
@@ -179,6 +191,18 @@ class Main(tk.Frame):
             for row in self.db.curs.fetchall()
         ]
 
+    def search_link_records(self, link):
+        link = ("%" + link + "%",)
+        self.db.curs.execute(
+            """SELECT * FROM destructive_content WHERE link LIKE ?""",
+            link,
+        )
+        [self.tree.delete(i) for i in self.tree.get_children()]
+        [
+            self.tree.insert("", "end", values=row)
+            for row in self.db.curs.fetchall()
+        ]
+
     def open_dialog(self):
         Child_add()
 
@@ -187,6 +211,9 @@ class Main(tk.Frame):
 
     def open_search_dialog(self):
         Search()
+
+    def open_search_link_dialog(self):
+        Search_link()
 
 
 class Child_add(tk.Toplevel):
@@ -355,6 +382,37 @@ class Search(tk.Toplevel):
         btn_search.bind(
             "<Button-1>",
             lambda event: self.view.search_records(self.entry_search.get()),
+        )
+        btn_search.bind("<Button-1>", lambda event: self.destroy(), add="+")
+
+
+class Search_link(tk.Toplevel):
+    def __init__(self):
+        super().__init__()
+        self.init_search_link()
+        self.view = app
+
+    def init_search_link(self):
+        self.title("Поиск по ссылке ")
+        self.geometry("700x100+400+300")
+        self.resizable(False, False)
+
+        label_search = tk.Label(self, text="Поиск записей по ссылке")
+        label_search.place(x=10, y=20)
+
+        self.entry_search = ttk.Entry(self)
+        self.entry_search.place(x=170, y=20, width=500)
+
+        btn_cancel = ttk.Button(self, text="Закрыть", command=self.destroy)
+        btn_cancel.place(x=185, y=50)
+
+        btn_search = ttk.Button(self, text="Поиск")
+        btn_search.place(x=105, y=50)
+        btn_search.bind(
+            "<Button-1>",
+            lambda event: self.view.search_link_records(
+                self.entry_search.get()
+            ),
         )
         btn_search.bind("<Button-1>", lambda event: self.destroy(), add="+")
 
