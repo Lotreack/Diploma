@@ -14,8 +14,8 @@ class Main(tk.Frame):
 
         toolbar = tk.Frame(bg="#d7d8e0", bd=2)
         toolbar.pack(side=tk.TOP, fill=tk.X)
-        self.add_img = tk.PhotoImage(file="add.png")
 
+        self.add_img = tk.PhotoImage(file="add.png")
         btn_open_dialog = tk.Button(
             toolbar,
             text="Добавить данные",
@@ -85,6 +85,7 @@ class Main(tk.Frame):
                 "Link",
                 "Author",
                 "Comments",
+                "Risk",
             ),
             height=15,
             show="headings",
@@ -92,30 +93,28 @@ class Main(tk.Frame):
 
         self.tree.column("ID", width=70, anchor=tk.CENTER)
         self.tree.column("Description", width=300, anchor=tk.CENTER)
-        self.tree.column("Type", width=270, anchor=tk.CENTER)
+        self.tree.column("Type", width=150, anchor=tk.CENTER)
         self.tree.column("Activity", width=180, anchor=tk.CENTER)
         self.tree.column("Link", width=120, anchor=tk.CENTER)
-        self.tree.column("Author", width=500, anchor=tk.CENTER)
+        self.tree.column("Author", width=150, anchor=tk.CENTER)
         self.tree.column("Comments", width=250, anchor=tk.CENTER)
-
+        self.tree.column("Risk", width=250, anchor=tk.CENTER)
         self.tree.heading("ID", text="ID записи")
         self.tree.heading(
             "Description",
-            text="Описание контента с признаками деструктивности",
+            text="Описание контента",
         )
-        self.tree.heading(
-            "Type", text="Тип контента с признаками деструктивности"
-        )
-        self.tree.heading("Activity", text="Количество переходов к посту")
+        self.tree.heading("Type", text="Тип контента")
+        self.tree.heading("Activity", text="Количество просмотров")
         self.tree.heading("Link", text="Ссылка на контент")
         self.tree.heading(
             "Author",
-            text="Автор поста (для ресурсов с обязательной регистрацией для размещения постов)",
+            text="Автор поста",
         )
 
-        self.tree.heading(
-            "Comments", text="Количество комментариев под постом"
-        )
+        self.tree.heading("Comments", text="Количество комментариев")
+
+        self.tree.heading("Risk", text="Риск")
 
         self.tree.pack(side=tk.LEFT)
 
@@ -123,17 +122,19 @@ class Main(tk.Frame):
         scroll.pack(side=tk.LEFT, fill=tk.Y)
         self.tree.configure(yscrollcommand=scroll.set)
 
-    def record(self, description, type, activity, link, author, comments):
+    def record(
+        self, description, type, activity, link, author, comments, risk
+    ):
         self.db.insert_data(
-            description, type, activity, link, author, comments
+            description, type, activity, link, author, comments, risk
         )
         self.view_records()
 
     def update_record(
-        self, description, type, activity, link, author, comments
+        self, description, type, activity, link, author, comments, risk
     ):
         self.db.curs.execute(
-            """UPDATE destructive_content SET description=?, type=?, activity=?, link=?, author=?, comments=? WHERE ID=?""",
+            """UPDATE destructive_content SET description=?, type=?, activity=?, link=?, author=?, comments=?, risk=? WHERE ID=?""",
             (
                 description,
                 type,
@@ -141,6 +142,7 @@ class Main(tk.Frame):
                 link,
                 author,
                 comments,
+                risk,
                 self.tree.set(self.tree.selection()[0], "#1"),
             ),
         )
@@ -213,8 +215,11 @@ class Child_add(tk.Toplevel):
         label_author = tk.Label(self, text="Автор")
         label_author.place(x=120, y=230)
 
-        label_type = tk.Label(self, text="Количество комментариев")
-        label_type.place(x=120, y=260)
+        label_comments = tk.Label(self, text="Количество комментариев")
+        label_comments.place(x=120, y=260)
+
+        label_risk = tk.Label(self, text="Риск")
+        label_risk.place(x=120, y=290)
         ########################################################
 
         self.entry_description = ttk.Entry(self)
@@ -239,6 +244,8 @@ class Child_add(tk.Toplevel):
         self.entry_comments = ttk.Entry(self)
         self.entry_comments.place(x=300, y=260)
 
+        self.entry_risk = ttk.Entry(self)
+        self.entry_risk.place(x=300, y=290)
         ###############################################################
 
         btn_cancel = ttk.Button(self, text="Закрыть", command=self.destroy)
@@ -255,6 +262,10 @@ class Child_add(tk.Toplevel):
                 self.entry_link.get(),
                 self.entry_author.get(),
                 self.entry_comments.get(),
+                float(self.entry_risk.get())
+                * float(self.entry_activity.get())
+                * float(self.entry_comments.get())
+                * 0.00001,
             ),
         )
 
@@ -283,6 +294,7 @@ class Child_update(Child_add):
                 self.entry_link.get(),
                 self.entry_author.get(),
                 self.entry_comments.get(),
+                self.entry_risk.get(),
             ),
         )
         self.btn_ok.destroy()
@@ -307,6 +319,7 @@ class Child_update(Child_add):
         self.entry_link.insert(0, row[4])
         self.entry_author.insert(0, row[5])
         self.entry_comments.insert(0, row[6])
+        self.entry_risk.insert(0, row[7])
 
 
 class Search(tk.Toplevel):
@@ -350,21 +363,25 @@ class DB:
            activity integer, 
            link text, 
            author text, 
-           comments integer)"""
+           comments integer,
+           risk real)"""
         )
         self.conn.commit()
 
-    def insert_data(self, description, type, activity, link, author, comments):
+    def insert_data(
+        self, description, type, activity, link, author, comments, risk
+    ):
         self.curs.execute(
             """ INSERT INTO destructive_content (description, 
            type, 
            activity, 
            link, 
            author, 
-           comments)
+           comments, 
+           risk)
            
-           VALUES(?, ?, ?, ?, ?, ?)""",
-            (description, type, activity, link, author, comments),
+           VALUES(?, ?, ?, ?, ?, ?, ?)""",
+            (description, type, activity, link, author, comments, risk),
         )
 
         self.conn.commit()
@@ -376,6 +393,6 @@ if __name__ == "__main__":
     app = Main(root)
     app.pack()
     root.title("База данных о контентах с признаками деструктивности")
-    root.geometry("1900x600+0+200")
+    root.geometry("1600x400+0+200")
     root.resizable(False, False)
     root.mainloop()
