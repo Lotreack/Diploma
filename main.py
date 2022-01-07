@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-import sqlite3
+import pymysql
 
 
 class Main(tk.Frame):
@@ -14,8 +14,8 @@ class Main(tk.Frame):
 
         toolbar = tk.Frame(bg="#d7d8e0", bd=2)
         toolbar.pack(side=tk.TOP, fill=tk.X)
-        self.add_img = tk.PhotoImage(file="add.png")
 
+        self.add_img = tk.PhotoImage(file="./img/add.png")
         btn_open_dialog = tk.Button(
             toolbar,
             text="Добавить данные",
@@ -27,7 +27,7 @@ class Main(tk.Frame):
         )
         btn_open_dialog.pack(side=tk.LEFT)
 
-        self.update_img = tk.PhotoImage(file="edit.png")
+        self.update_img = tk.PhotoImage(file="./img/edit.png")
         btn_edit_dialog = tk.Button(
             toolbar,
             text="Редактировать",
@@ -39,7 +39,7 @@ class Main(tk.Frame):
         )
         btn_edit_dialog.pack(side=tk.LEFT)
 
-        self.delete_img = tk.PhotoImage(file="delete.png")
+        self.delete_img = tk.PhotoImage(file="./img/delete.png")
         btn_delete_dialog = tk.Button(
             toolbar,
             text="Удалить запись",
@@ -51,7 +51,7 @@ class Main(tk.Frame):
         )
         btn_delete_dialog.pack(side=tk.LEFT)
 
-        self.refresh_img = tk.PhotoImage(file="refresh.png")
+        self.refresh_img = tk.PhotoImage(file="./img/refresh.png")
         btn_refresh_dialog = tk.Button(
             toolbar,
             text="Обновить",
@@ -63,7 +63,7 @@ class Main(tk.Frame):
         )
         btn_refresh_dialog.pack(side=tk.LEFT)
 
-        self.search_img = tk.PhotoImage(file="search.png")
+        self.search_img = tk.PhotoImage(file="./img/search.png")
         btn_search_dialog = tk.Button(
             toolbar,
             text="Найти запись",
@@ -75,6 +75,18 @@ class Main(tk.Frame):
         )
         btn_search_dialog.pack(side=tk.LEFT)
 
+        self.search_img_link = tk.PhotoImage(file="./img/search_link.png")
+        btn_search_link_dialog = tk.Button(
+            toolbar,
+            text="Найти запись по ссылке",
+            bg="#d7d8e0",
+            bd=2,
+            image=self.search_img_link,
+            compound=tk.TOP,
+            command=self.open_search_link_dialog,
+        )
+        btn_search_link_dialog.pack(side=tk.LEFT)
+
         self.tree = ttk.Treeview(
             self,
             columns=(
@@ -85,6 +97,7 @@ class Main(tk.Frame):
                 "Link",
                 "Author",
                 "Comments",
+                "Risk",
             ),
             height=15,
             show="headings",
@@ -92,30 +105,29 @@ class Main(tk.Frame):
 
         self.tree.column("ID", width=70, anchor=tk.CENTER)
         self.tree.column("Description", width=300, anchor=tk.CENTER)
-        self.tree.column("Type", width=270, anchor=tk.CENTER)
+        self.tree.column("Type", width=150, anchor=tk.CENTER)
         self.tree.column("Activity", width=180, anchor=tk.CENTER)
         self.tree.column("Link", width=120, anchor=tk.CENTER)
-        self.tree.column("Author", width=500, anchor=tk.CENTER)
+        self.tree.column("Author", width=150, anchor=tk.CENTER)
         self.tree.column("Comments", width=250, anchor=tk.CENTER)
+        self.tree.column("Risk", width=250, anchor=tk.CENTER)
 
         self.tree.heading("ID", text="ID записи")
         self.tree.heading(
             "Description",
-            text="Описание контента с признаками деструктивности",
+            text="Описание контента",
         )
-        self.tree.heading(
-            "Type", text="Тип контента с признаками деструктивности"
-        )
-        self.tree.heading("Activity", text="Количество переходов к посту")
+        self.tree.heading("Type", text="Тип контента")
+        self.tree.heading("Activity", text="Количество просмотров")
         self.tree.heading("Link", text="Ссылка на контент")
         self.tree.heading(
             "Author",
-            text="Автор поста (для ресурсов с обязательной регистрацией для размещения постов)",
+            text="Автор поста",
         )
 
-        self.tree.heading(
-            "Comments", text="Количество комментариев под постом"
-        )
+        self.tree.heading("Comments", text="Количество комментариев")
+
+        self.tree.heading("Risk", text="Риск распространения контента")
 
         self.tree.pack(side=tk.LEFT)
 
@@ -123,24 +135,27 @@ class Main(tk.Frame):
         scroll.pack(side=tk.LEFT, fill=tk.Y)
         self.tree.configure(yscrollcommand=scroll.set)
 
-    def record(self, description, type, activity, link, author, comments):
+    def record(
+        self, description, type, activity, link, author, comments, risk
+    ):
         self.db.insert_data(
-            description, type, activity, link, author, comments
+            description, type, activity, link, author, comments, risk
         )
         self.view_records()
 
     def update_record(
-        self, description, type, activity, link, author, comments
+        self, description, type, activity, link, author, comments, risk
     ):
         self.db.curs.execute(
-            """UPDATE destructive_content SET description=?, type=?, activity=?, link=?, author=?, comments=? WHERE ID=?""",
+            f"""UPDATE {self.db.table_name} SET description=%s, type=%s, activity=%s, link=%s, author=%s, comments=%s, risk=%s WHERE ID=%s""",
             (
                 description,
                 type,
-                activity,
+                int(activity),
                 link,
                 author,
-                comments,
+                int(comments),
+                float(risk),
                 self.tree.set(self.tree.selection()[0], "#1"),
             ),
         )
@@ -148,7 +163,7 @@ class Main(tk.Frame):
         self.view_records()
 
     def view_records(self):
-        self.db.curs.execute("""SELECT * FROM destructive_content""")
+        self.db.curs.execute(f"""SELECT * FROM {self.db.table_name}""")
         [self.tree.delete(i) for i in self.tree.get_children()]
         [
             self.tree.insert("", "end", values=row)
@@ -158,7 +173,7 @@ class Main(tk.Frame):
     def delete_records(self):
         for selection_item in self.tree.selection():
             self.db.curs.execute(
-                """DELETE FROM destructive_content WHERE id=?""",
+                f"""DELETE FROM {self.db.table_name} WHERE id=%s""",
                 (self.tree.set(selection_item, "#1"),),
             )
         self.db.conn.commit()
@@ -167,8 +182,20 @@ class Main(tk.Frame):
     def search_records(self, description):
         description = ("%" + description + "%",)
         self.db.curs.execute(
-            """SELECT * FROM destructive_content WHERE description LIKE ?""",
+            f"""SELECT * FROM {self.db.table_name} WHERE description LIKE %s""",
             description,
+        )
+        [self.tree.delete(i) for i in self.tree.get_children()]
+        [
+            self.tree.insert("", "end", values=row)
+            for row in self.db.curs.fetchall()
+        ]
+
+    def search_link_records(self, link):
+        link = ("%" + link + "%",)
+        self.db.curs.execute(
+            f"""SELECT * FROM {self.db.table_name} WHERE link LIKE %s""",
+            link,
         )
         [self.tree.delete(i) for i in self.tree.get_children()]
         [
@@ -184,6 +211,9 @@ class Main(tk.Frame):
 
     def open_search_dialog(self):
         Search()
+
+    def open_search_link_dialog(self):
+        Search_link()
 
 
 class Child_add(tk.Toplevel):
@@ -207,14 +237,17 @@ class Child_add(tk.Toplevel):
         label_activity = tk.Label(self, text="Количество переходов к посту")
         label_activity.place(x=120, y=170)
 
-        label_link = tk.Label(self, text="Ссылка")
+        label_link = tk.Label(self, text="Ссылка на пост")
         label_link.place(x=120, y=200)
 
         label_author = tk.Label(self, text="Автор")
         label_author.place(x=120, y=230)
 
-        label_type = tk.Label(self, text="Количество комментариев")
-        label_type.place(x=120, y=260)
+        label_comments = tk.Label(self, text="Количество комментариев")
+        label_comments.place(x=120, y=260)
+
+        # label_risk = tk.Label(self, text="Риск")
+        # label_risk.place(x=120, y=290)
         ########################################################
 
         self.entry_description = ttk.Entry(self)
@@ -222,7 +255,13 @@ class Child_add(tk.Toplevel):
 
         self.entry_type = self.combobox = ttk.Combobox(
             self,
-            values=[u"Видео", u"Картинка", u"Текстовый пост", u"Ссылка"],
+            values=[
+                u"Видео",
+                u"Картинка",
+                u"Текстовый пост",
+                u"Ссылка",
+                u"Текстовый комментарий",
+            ],
         )
         self.combobox.current(0)
         self.combobox.place(x=300, y=140)
@@ -239,6 +278,8 @@ class Child_add(tk.Toplevel):
         self.entry_comments = ttk.Entry(self)
         self.entry_comments.place(x=300, y=260)
 
+        # self.entry_risk = ttk.Entry(self)
+        # self.entry_risk.place(x=300, y=290)
         ###############################################################
 
         btn_cancel = ttk.Button(self, text="Закрыть", command=self.destroy)
@@ -251,10 +292,13 @@ class Child_add(tk.Toplevel):
             lambda event: self.view.record(
                 self.entry_description.get(),
                 self.entry_type.get(),
-                self.entry_activity.get(),
+                int(self.entry_activity.get()),
                 self.entry_link.get(),
                 self.entry_author.get(),
-                self.entry_comments.get(),
+                int(self.entry_comments.get()),
+                float(self.entry_activity.get())
+                * float(self.entry_comments.get())
+                * 0.0000001,
             ),
         )
 
@@ -279,17 +323,20 @@ class Child_update(Child_add):
             lambda event: self.view.update_record(
                 self.entry_description.get(),
                 self.entry_type.get(),
-                self.entry_activity.get(),
+                int(self.entry_activity.get()),
                 self.entry_link.get(),
                 self.entry_author.get(),
-                self.entry_comments.get(),
+                int(self.entry_comments.get()),
+                float(self.entry_activity.get())
+                * float(self.entry_comments.get())
+                * 0.0000001,
             ),
         )
         self.btn_ok.destroy()
 
     def default_data(self):
         self.db.curs.execute(
-            """SELECT * FROM destructive_content WHERE id=?""",
+            f"""SELECT * FROM {self.db.table_name} WHERE id=%s""",
             (self.view.tree.set(self.view.tree.selection()[0], "#1"),),
         )
         row = self.db.curs.fetchone()
@@ -307,6 +354,7 @@ class Child_update(Child_add):
         self.entry_link.insert(0, row[4])
         self.entry_author.insert(0, row[5])
         self.entry_comments.insert(0, row[6])
+        self.entry_risk.insert(0, row[7])
 
 
 class Search(tk.Toplevel):
@@ -338,35 +386,73 @@ class Search(tk.Toplevel):
         btn_search.bind("<Button-1>", lambda event: self.destroy(), add="+")
 
 
+class Search_link(tk.Toplevel):
+    def __init__(self):
+        super().__init__()
+        self.init_search_link()
+        self.view = app
+
+    def init_search_link(self):
+        self.title("Поиск по ссылке ")
+        self.geometry("700x100+400+300")
+        self.resizable(False, False)
+
+        label_search = tk.Label(self, text="Поиск записей по ссылке")
+        label_search.place(x=10, y=20)
+
+        self.entry_search = ttk.Entry(self)
+        self.entry_search.place(x=170, y=20, width=500)
+
+        btn_cancel = ttk.Button(self, text="Закрыть", command=self.destroy)
+        btn_cancel.place(x=185, y=50)
+
+        btn_search = ttk.Button(self, text="Поиск")
+        btn_search.place(x=105, y=50)
+        btn_search.bind(
+            "<Button-1>",
+            lambda event: self.view.search_link_records(
+                self.entry_search.get()
+            ),
+        )
+        btn_search.bind("<Button-1>", lambda event: self.destroy(), add="+")
+
+
 class DB:
     def __init__(self):
-        self.conn = sqlite3.connect("destructive_content.db")
+        self.table_name="destructive_content"
+        self.conn = pymysql.connect(host='91.210.169.157',
+            user='user',
+            password='',
+            db='db_content',
+            charset='utf8mb4')
         self.curs = self.conn.cursor()
         self.curs.execute(
-            """CREATE TABLE IF NOT EXISTS destructive_content 
-           (id integer primary key, 
+            f"""CREATE TABLE IF NOT EXISTS {self.table_name} 
+           (id integer primary key auto_increment, 
            description text, 
            type text, 
            activity integer, 
            link text, 
            author text, 
-           comments integer)"""
+           comments integer,
+           risk double(25,15))"""
         )
         self.conn.commit()
 
-    def insert_data(self, description, type, activity, link, author, comments):
+    def insert_data(
+        self, description, type, activity, link, author, comments, risk
+    ):
         self.curs.execute(
-            """ INSERT INTO destructive_content (description, 
+            f""" INSERT INTO {self.table_name} (description, 
            type, 
            activity, 
            link, 
            author, 
-           comments)
-           
-           VALUES(?, ?, ?, ?, ?, ?)""",
-            (description, type, activity, link, author, comments),
+           comments, 
+           risk)
+           VALUES(%s, %s, %s, %s, %s, %s, %s)""",
+            [description, type, int(activity), link, author, int(comments), risk]
         )
-
         self.conn.commit()
 
 
@@ -376,6 +462,6 @@ if __name__ == "__main__":
     app = Main(root)
     app.pack()
     root.title("База данных о контентах с признаками деструктивности")
-    root.geometry("1900x600+0+200")
+    root.geometry("1600x400+0+200")
     root.resizable(False, False)
     root.mainloop()
