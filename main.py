@@ -225,7 +225,7 @@ class Child_add(tk.Toplevel):
     def init_child(self):
         self.title("Добавить данные о контенте")
         self.geometry("800x400+400+300")
-        self.resizable(True, True)
+        self.resizable(False, False)
         ########################################################
 
         label_description = tk.Label(self, text="Наименование")
